@@ -120,19 +120,16 @@
 <body>
 
     <div class="canvas-container">
-        <!-- Lienzo de 512x512 para previsualizar la matriz de 64x64 a escala -->
         <canvas id="editorCanvas" width="512" height="512"></canvas>
     </div>
     
     <div class="panel">
         <div class="control-group">
-            <h3>Librería de Clases</h3>
+            <h3>Librería de Bases</h3>
             <select id="charSelect" onchange="cargarDesdeLibreria()">
                 <option value="empty">-- Lienzo en Blanco --</option>
-                <option value="SCOUT">Scout (Clásico)</option>
-                <option value="WIZARD">Wizard (Clásico)</option>
-                <option value="FIGHTER">Fighter (Clásico)</option>
-                <option value="CLERIC">Cleric (Nuevo Blockout)</option>
+                <option value="BASE_MALE">Maniquí Base (Hombre)</option>
+                <option value="BASE_FEMALE">Maniquí Base (Mujer)</option>
             </select>
         </div>
 
@@ -170,21 +167,18 @@
         const gridSize = 64;
         const scale = canvas.width / gridSize;
         
-        // Z-Index de pintura
         const ordenRender = ["base_body", "armor", "headgear", "weapon"];
         
-        // Estado Global
-        let paletaActiva = { " ": "transparent", "A": "#000000" };
+        let paletaActiva = { " ": "transparent", "A": "#000000", "D": "#ffdbac", "E": "#eeb677" };
         let capas = {};
         let capaActual = "base_body";
         let pincelActual = "A";
         let herramientaActiva = "pincel";
         let isDrawing = false;
 
-        // Base de Datos de Clases
         const libreriaPersonajes = {
-            "SCOUT": {
-                "paleta": { " ": "transparent", "A": "#000000", "B": "#8d6e63", "C": "#301b03", "D": "#ffdbac", "E": "#eeb677", "F": "#efb677", "G": "#7cb342", "H": "#558b2f", "I": "#33691e", "J": "#000402", "K": "#011e0c" },
+            "BASE_MALE": {
+                "paleta": { " ": "transparent", "A": "#000000", "D": "#ffdbac", "E": "#eeb677", "F": "#bdc3c7", "G": "#567194", "H": "#8a2be2" },
                 "blueprint": [
                     "                                                                ",
                     "                                                                ",
@@ -195,66 +189,39 @@
                     "                                                                ",
                     "                                                                ",
                     "                                                                ",
-                    "                                AA                              ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                              AAAA                              ",
+                    "                             ADDEEA                             ",
+                    "                            ADDDEEEA                            ",
+                    "                            ADDDEEEA                            ",
+                    "                            ADDDEEEA                            ",
+                    "                             ADDEEA                             ",
+                    "                              AAAA                              ",
+                    "                           AAAADDEEAAAA                         ",
+                    "                          AADDDDDEEEEAA                         ",
+                    "                         AADDDDDDDEEEEEA                        ",
+                    "                        AADDDDDDDDDEEEEEA                       ",
+                    "                        AADDAADDDDAAEEDDA                       ",
+                    "                        AADA AADDDAA AEDA                       ",
+                    "                        AADA AADDDAA AEDA                       ",
+                    "                        AADA AADDDAA AEDA                       ",
+                    "                        AAAA AADDDAA AAAA                       ",
+                    "                             AADDDAA                            ",
+                    "                             AADDDAA                            ",
+                    "                             AADDDAA                            ",
                     "                              AAAAA                             ",
-                    "                         AAAAAABBBAAA                           ",
-                    "                         ABBBBBBBBCAA                           ",
-                    "                       AABBCCBBCCBCCA                           ",
-                    "                       ABBCCCCCBBBBCAA                          ",
-                    "                       ABBBACCCBBBBCCA                          ",
-                    "                       ABCBCAAAAAAAAAA                          ",
-                    "                      AACCAADDDDDDA                             ",
-                    "                      ABCAADDADDADA                             ",
-                    "                      ABCADDDADDADA                             ",
-                    "                      AAAADDDDDDDDA                             ",
-                    "                        AAADDDDDDDA                             ",
-                    "                        ACADEDDDDAA                             ",
-                    "                        ACADDEFEA                               ",
-                    "                        AAADDDDFA                               ",
-                    "                     AAAAAADDDDDAAAAAAA                         ",
-                    "                    AAGHGGGAAADDAAGGGGAAA                       ",
-                    "                   AAAAHHGGGGAAAAGHHGGAHA                       ",
-                    "                   AGGAAGHHGGGGGGGHHGAHHAA                      ",
-                    "                   AGGHAAAGGHHHHHGHHIAHHHA                      ",
-                    "                   AGGHAAAGGGGGGGHIAAAHHHA                      ",
-                    "                   AAAAAAAAAAAAAAAAHHAAAAA                      ",
-                    "                   AFFFFAGHHHHHHHHHHHAFFFA                      ",
-                    "                   AAAAAAGGGGGGGGHHHHAFDDA                      ",
-                    "                  ABBBBBAGGGGGGGGGGGHAAAAA                      ",
-                    "                   ABBBBAAAAAAAAAAAAAABBBBA                     ",
-                    "                   ABBBBABBBBBBBBBBBAABBBA                      ",
-                    "                   AAAAAABBBBBBBBBBBAABBBA                      ",
-                    "                   AFFFFAAAAAAAAAAAAAAAAAA                      ",
-                    "                   AFDDDAHHHHHHHHHGGHADDDA                      ",
-                    "                   AADDDAHHHHGGGGGGGHADDAA                      ",
-                    "                     AAAHHHGGGGGGGGGHAAAA                       ",
-                    "                      AAHGGGGGGGGGGGHA                          ",
-                    "                      AAHHGGGHHHHHHHHA                          ",
-                    "                      AAHHHHHHHHHHHHHA                          ",
-                    "                      AAAAAAAAAAAAAAAA                          ",
-                    "                       AJJJJA   AJJJJA                          ",
-                    "                       AKKJJA   AJJKKA                          ",
-                    "                       AKKKJA   AJKKKA                          ",
-                    "                       AJKKKA   AKKKJA                          ",
-                    "                      AAAAAAAA AAAAAAAA                         ",
-                    "                      ABBBBBAA AABBBBBA                         ",
-                    "                      AAAAAAAA AAAAAAAA                         ",
-                    "                       AAABBA   AAAABA                          ",
-                    "                       AAABBA   AAABBA                          ",
-                    "                      AAAABBA   AAABBAA                         ",
-                    "                      AAAABBA   AABBBBA                         ",
-                    "                      ABBBBBA   ABBBBBA                         ",
-                    "                      AAAAAAA   AAAAAAA                         ",
-                    "                                                                ",
-                    "                                                                ",
-                    "                                                                ",
-                    "                                                                ",
-                    "                                                                "
-                ]
-            },
-            "WIZARD": {
-                "paleta": { " ": "transparent", "A": "#000000", "B": "#8a2be2", "C": "#4f1c78", "D": "#ffffff", "E": "#5d4037", "F": "#ffdbac", "G": "#09eeff", "H": "#9969ab", "I": "#d395e9", "J": "#05eeff", "K": "#501c78" },
-                "blueprint": [
+                    "                             AADDEEA                            ",
+                    "                            AADD AEEA                           ",
+                    "                            AADD AEEA                           ",
+                    "                            AADD AEEA                           ",
+                    "                            AADD AEEA                           ",
+                    "                           AADD   AEEA                          ",
+                    "                           AADD   AEEA                          ",
+                    "                           AAAA   AAAA                          ",
                     "                                                                ",
                     "                                                                ",
                     "                                                                ",
@@ -264,66 +231,6 @@
                     "                                                                ",
                     "                                                                ",
                     "                                                                ",
-                    "                           AAAAAA                               ",
-                    "                          ABBBBBCAA                             ",
-                    "                         ABBBBCCCCCA                            ",
-                    "                       AABBBBBCCCCCCA                           ",
-                    "                       ACBBBBBAAAACCA       AAAA                ",
-                    "                       ACBBAAAAAAAACA       ADEAA               ",
-                    "                       ACBBAAAAAAAACA     AAADDEAAA             ",
-                    "                     AACCBAFFFFAFFACA     ADGAAEEEA             ",
-                    "                    AACCBBAFFFFFFFACA     AGGGADEAA             ",
-                    "                    ACCBBAAFFAFFAFACA     AAAAAEEA              ",
-                    "                   AABBBBAFFFAFFAFACA      AADEEEA              ",
-                    "                   ACBBBBAFFFFFFFFACA       AEEEAA              ",
-                    "                   ACBBBBAAFFFFFFFACA       AEEEA               ",
-                    "                   ABBBCCCAAAFFFAAACAA      AAEAA               ",
-                    "                   AAAAACCAAAFFFAAAAAAA      AEA                ",
-                    "                   AACCACCAAAFFFAAAACCCA     AEA                ",
-                    "                   ABBBAAAAAAAAAAAHACCBBA    AEA                ",
-                    "                  ABBBBCCCAHHHIHIHHACBBBBA   AEE                ",
-                    "                 ABBBBBCCCAHHHJHHHHACBBBBA   AEE                ",
-                    "                 ABBBBCCCAIIIJJJIHHAAABBBAA  AEE                ",
-                    "                 ABCBBCCAIIIIJJJIHHAAAAABBA  AEE                ",
-                    "                 AAABBCAAIIIIIJIIHHAAHHHAAAAAAEA                ",
-                    "                 AAAAAAAAIIIIIIIIHHAAHHHHIAAFAEA                ",
-                    "                 ABAAHHHAIIIIIIIIHHAAHHHHIAAFAAA                ",
-                    "                 ABAIIHHAIIIIIIHHHHAAHHHHIAAFFFA                ",
-                    "                 ABAIIHHAIIIIIHHHHHAAHHHIIAAFFFA                ",
-                    "                 ABAIIHHAAAAAAAAAAAAAHIHIIAAFFFA                ",
-                    "                 ABAIIHHAEEEEEEEEEEAAHIIIIAAAAAA                ",
-                    "                 ABAAAAAAEEEEEEEEEEAAAIIIIAA AEA                ",
-                    "                 ABAFFFFAAAAAAAAAAAAAAAIIIAA AEA                ",
-                    "                 ABAFFFFAAAABBBBBAAAAAAIIIAA AEA                ",
-                    "                 ABAAFFFAHHABBBBBAAAAAAAAIAA AEA                ",
-                    "                 ABBCAAAIIHABBBCBAAAAAKKAAAA AEA                ",
-                    "                 ABBCCAAIIHABBBCBAAAAAKKKBBA AEA                ",
-                    "                 ABBCCAAIHHABBBCBAAAHAKKKBBA AEA                ",
-                    "                 ABBCCAAIHHABCBBBAAAHAKKKBBA AEA                ",
-                    "                 ABBCCAAIHHABBBBBAAAHAKKKBBA AEA                ",
-                    "                ACBBCCAAIHHABBBCBAAAHAKKKBBA AEA                ",
-                    "               ACCBBCCAAIIIABBBBBAAAHAKBBBBA AEA                ",
-                    "               ACCBBCCAAAAAABBBBCAAHHAKBBKBA AEA                ",
-                    "               ABCBCCCAAHHHHABBBCAHHHAKBBKBA AEA                ",
-                    "               ABCBCCCAAHHHHAABBCHHHHAKBBKBA AEA                ",
-                    "              ABBCBCCCAAHHIHAAAAAHHHHAKBBBBA AEA                ",
-                    "             ABCBBBCCCAAAAAAACAAAAAAAAKBBBBA AEA                ",
-                    "            ACBBBBBBCCAAAAEEACCAAAAAEAKKBBBA AEA                ",
-                    "            ACBBBBBBCCAAAAEEACCAAAAEEAKKKAAA AEA                ",
-                    "             AABBBBBCCAAAAEEACCAAAAEEAAAAA   AEA                ",
-                    "              AAAAAAAAAAAAEEAAAAAAEEEEA      AEA                ",
-                    "                      AEEEEEA   AEEEEEA      AEA                ",
-                    "                      AAAAAAA   AAAAAAA      AAA                ",
-                    "                                                                ",
-                    "                                                                ",
-                    "                                                                ",
-                    "                                                                ",
-                    "                                                                "
-                ]
-            },
-            "FIGHTER": {
-                "paleta": { " ": "transparent", "A": "#000000", "B": "#567194", "C": "#3a4e69", "D": "#253347", "E": "#ffdbac", "F": "#bdc3c7", "G": "#e4e7ec", "H": "#7f8c8d", "I": "#ffffff", "J": "#5d4037" },
-                "blueprint": [
                     "                                                                ",
                     "                                                                ",
                     "                                                                ",
@@ -332,57 +239,6 @@
                     "                                                                ",
                     "                                                                ",
                     "                                                                ",
-                    "                                                                ",
-                    "                           AAAAAA                               ",
-                    "                          ABBBBBBAA                             ",
-                    "                         ABBBBBBBBBA                            ",
-                    "                        ABBBBBBBBBCDA                           ",
-                    "                        ABBBBBBBBCCDA                           ",
-                    "                        ABBBAAAAAAADA                           ",
-                    "                        ABBBEEEEEEEDA                           ",
-                    "                        ABBBEEAEEAEDA                           ",
-                    "                        ABBBEEAEEAEDA                           ",
-                    "                        ABBBEEEEEEEDA                           ",
-                    "                        ABBBBBCCCCCDA                           ",
-                    "                        ABBBBBCCCCCDA                           ",
-                    "                       ACCBBBBCCCCCDA                           ",
-                    "                      AABBCBBBCCCCDDAA                          ",
-                    "                     AFGAABCBBCCCCDAAAA                         ",
-                    "                    AFFGFFACBBCCCCAAFFFA                        ",
-                    "                   AFFGFFFACCCCCCAHAGGFFA                       ",
-                    "                   AFFGFFFA AAAAAHHAGGGFFA                      ",
-                    "                  AFFGFFFFAHHHHHHHHAFGGGFA                      ",
-                    "                  AFFGFFFAHHHHHHHHHAFFGGFA                      ",
-                    "                  AGGGGGAHHHHHHHHHHAAAAAAA                      ",
-                    "                   AAAAAAFHHHHHHHHAGGGGGGGA                     ",
-                    "                   AFFFFAFHHHHHHHAGGCCCCCIGA                    ",
-                    "                   AHHFFAFFHHHHHHAGCCCCCCCGGA                   ",
-                    "                   AHHHFAFFFHHHHAICCCCCCCCCGA                   ",
-                    "                   AHHHFAFFFHHHHAICCCFFFCCCGA                   ",
-                    "                   AHHHHAAAAAAAAAGCCCFCFCCCGA                   ",
-                    "                   AHHHHAJJJJJJJAICCCFFFCCCGA                   ",
-                    "                   AAAAAAJJJJJJJAICCCCCCCCCGA                   ",
-                    "                   AEEEEAAAAAAAAAIICCCCCCCGGA                   ",
-                    "                   AEEEEAFHACCCCCAIICCCCCGGA                    ",
-                    "                   AAEEEAFHABBBBCCAIICCCGGA                     ",
-                    "                  ADCAAAFFHABBBBBCAAIICGGA                      ",
-                    "                 ADCCDDAFHHABBBBBCAAAIIGA                       ",
-                    "                 ACCCDDAFHHABCBBBCAAAAGA                        ",
-                    "                 ACCCDDAFHHABCBBBCAAHAA                         ",
-                    "                 ACCCDDAFHHABCBBBCAAHA                          ",
-                    "                ACCCCDDAFHHABCBCBCAAHA                          ",
-                    "               ADCDCDDDAFHHABBBCBCAAHA                          ",
-                    "               ACCDCCDDAAAAABBBCBCAAAA                          ",
-                    "               ACCCCCDDACCBBABBCBACCBA                          ",
-                    "               ACCCCCDDACCBBAABCACCCBA                          ",
-                    "              ACCDCCCDDACCBBADAAACCCBA                          ",
-                    "             ADCCCCDCDDAAAAAADDDAAAAAA                          ",
-                    "            ACCCCCCDDDDAAAJJADDDAAAAJA                          ",
-                    "            ACCDCCCCCDDAAAJJADDDAAAJJA                          ",
-                    "             AADCCDDDDAAAAJJADDDAAAJJAA                         ",
-                    "              AAAAAAAAAAAAJJAAAAAAJJJJA                         ",
-                    "                      AJJJJJA   AJJJJJA                         ",
-                    "                      AAAAAAA   AAAAAAA                         ",
                     "                                                                ",
                     "                                                                ",
                     "                                                                ",
@@ -390,9 +246,12 @@
                     "                                                                "
                 ]
             },
-            "CLERIC": {
-                "paleta": { " ": "transparent", "A": "#000000", "B": "#fdf5e6", "C": "#d4ac0d", "D": "#ffdbac", "E": "#5d4037", "F": "#ffffff" },
+            "BASE_FEMALE": {
+                "paleta": { " ": "transparent", "A": "#000000", "D": "#ffdbac", "E": "#eeb677", "F": "#bdc3c7", "G": "#567194", "H": "#8a2be2" },
                 "blueprint": [
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
                     "                                                                ",
                     "                                                                ",
                     "                                                                ",
@@ -405,49 +264,46 @@
                     "                                                                ",
                     "                                                                ",
                     "                              AAAA                              ",
-                    "                             ADDDDA                             ",
-                    "                            ADDDDDDA                            ",
-                    "                            ADDDDDDA                            ",
-                    "                            ADDDDDDA                            ",
-                    "                             ADDDDA                             ",
+                    "                             ADDEEA                             ",
+                    "                            ADDDEEEA                            ",
+                    "                            ADDDEEEA                            ",
+                    "                            ADDDEEEA                            ",
+                    "                             ADDEEA                             ",
                     "                              AAAA                              ",
-                    "                            AABBBBAA                            ",
-                    "                           AABBBBBBAA                           ",
-                    "                          AABBBBBBBBAA                          ",
-                    "                         AABBBBBBBBBBAA                         ",
-                    "                        AABBBBBBBBBBBBAA                        ",
-                    "                        AABBBBBBBBBBBBAA                        ",
-                    "                       AABBBBBBBBBBBBBBAA                       ",
-                    "                       AABBBBBBBBBBBBBBAA                       ",
-                    "                       AABBBAAAAAAAABBBAA                       ",
-                    "                       AABBADDDDDDDDAABBA                       ",
-                    "                       AABAADEEEEEEEDAABA                       ",
-                    "                        AAAADEEFFFEEEDAAA                       ",
-                    "                           ADEEFFFFFEEDA                        ",
-                    "                           ADEEFFFFFEEDA                        ",
-                    "                           ADEEEEEEEEEDA                        ",
-                    "                            ADDDDDDDDDA                         ",
-                    "                            AAAAAAAAAAA                         ",
-                    "                           AABBBBBBBBBBAA                       ",
-                    "                           AABBCBBBBCBBAA                       ",
-                    "                          AABBBCCBBCCBBBAA                      ",
-                    "                          AABBBBCBBCBBBBAA                      ",
-                    "                         AABBBBBCBBCBBBBBAA                     ",
-                    "                         AABBBBBCBBCBBBBBAA                     ",
-                    "                        AABBBBBBCBBCBBBBBBAA                    ",
-                    "                        AABBBBBBCBBCBBBBBBAA                    ",
-                    "                       AABBBBBBBCBBCBBBBBBBAA                   ",
-                    "                       AABBBBBBBCBBCBBBBBBBAA                   ",
-                    "                      AABBBBBBBBCBBCBBBBBBBBAA                  ",
-                    "                      AABBBBBBBBCBBCBBBBBBBBAA                  ",
-                    "                     AABBBBBBBBBCBBCBBBBBBBBBAA                 ",
-                    "                     AABBBBBBBBBCBBCBBBBBBBBBAA                 ",
-                    "                    AABBBBBBBBBBCBBCBBBBBBBBBBAA                ",
-                    "                    AABBBBBBBBBBCBBCBBBBBBBBBBAA                ",
-                    "                   AABBBBBBBBBBBCBBCBBBBBBBBBBBAA               ",
-                    "                   AABBBBBBBBBBBCBBCBBBBBBBBBBBAA               ",
-                    "                  AABBBBBBBBBBBBCBBCBBBBBBBBBBBBAA              ",
-                    "                  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA              ",
+                    "                            AAADDEEAAA                          ",
+                    "                           AADDDDEEEEAA                         ",
+                    "                          AADDDDDEEEEEEA                        ",
+                    "                          AADDAADDAAEEEA                        ",
+                    "                          AADA AADAA AEDA                       ",
+                    "                          AADA AADAA AEDA                       ",
+                    "                          AADA AADAA AEDA                       ",
+                    "                          AADA AADAA AEDA                       ",
+                    "                          AAAA AADAA AAAA                       ",
+                    "                               AADAA                            ",
+                    "                              AADDDA                            ",
+                    "                             AADDDEEA                           ",
+                    "                              AAAAAA                            ",
+                    "                             AADDDEEA                           ",
+                    "                             AADD AEEA                          ",
+                    "                             AADD AEEA                          ",
+                    "                             AADD  AEEA                         ",
+                    "                             AADD  AEEA                         ",
+                    "                             AADD   AEEA                        ",
+                    "                             AADD   AAAA                        ",
+                    "                             AAAA                               ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
                     "                                                                ",
                     "                                                                ",
                     "                                                                ",
@@ -461,7 +317,6 @@
             }
         };
 
-        // 1. INICIALIZAR Y GESTIONAR CAPAS
         function inicializarCapas() {
             ordenRender.forEach(capa => {
                 capas[capa] = Array.from({ length: gridSize }, () => Array(gridSize).fill(" "));
@@ -473,7 +328,7 @@
         function cargarDesdeLibreria() {
             const selector = document.getElementById('charSelect').value;
             if (selector === "empty") {
-                paletaActiva = { " ": "transparent", "A": "#000000", "B": "#ffffff" };
+                paletaActiva = { " ": "transparent", "A": "#000000", "D": "#ffdbac", "E": "#eeb677" };
                 inicializarCapas();
                 return;
             }
@@ -490,10 +345,14 @@
             }
 
             construirPaletaUI();
+            
+            // Cambiar automáticamente a la capa de armadura tras cargar la base
+            document.getElementById('layerSelect').value = "armor";
+            cambiarCapa();
+            
             renderizarCanvas();
         }
 
-        // 2. RENDERIZADO VISUAL
         function renderizarCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
@@ -511,7 +370,6 @@
             });
         }
 
-        // 3. INTERACCIÓN PINCEL / BOTE
         function manejarClickCanvas(e) {
             const rect = canvas.getBoundingClientRect();
             const x = Math.floor((e.clientX - rect.left) / scale);
@@ -546,12 +404,10 @@
             }
         }
 
-        // Eventos
         canvas.addEventListener('mousedown', (e) => { isDrawing = true; manejarClickCanvas(e); });
         canvas.addEventListener('mousemove', (e) => { if (isDrawing && herramientaActiva === 'pincel') manejarClickCanvas(e); });
         window.addEventListener('mouseup', () => { isDrawing = false; });
 
-        // 4. INTERFAZ
         function cambiarCapa() { capaActual = document.getElementById('layerSelect').value; }
 
         function setHerramienta(herramienta) {
@@ -588,7 +444,6 @@
             }
         }
 
-        // 5. EXPORTACIÓN
         function exportarJSON() {
             const payloadFinal = { paleta: paletaActiva, capas: {} };
             
@@ -597,7 +452,7 @@
             });
             
             const finalJSON = {
-                name: document.getElementById('charSelect').value !== "empty" ? document.getElementById('charSelect').value : "NEW_CLASS",
+                name: document.getElementById('charSelect').value !== "empty" ? document.getElementById('charSelect').value : "NEW_DESIGN",
                 category: "characters",
                 payload: payloadFinal
             };
@@ -605,7 +460,6 @@
             document.getElementById('outputConsole').value = JSON.stringify(finalJSON, null, 2);
         }
 
-        // Arrancar
         inicializarCapas();
     </script>
 </body>
