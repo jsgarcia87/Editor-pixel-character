@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taskoria - Editor de Clases 64x64</title>
+    <style>
+        :root {
+            --bg-dark: #1e272e;
+            --bg-panel: #2c3e50;
+            --accent: #e74c3c;
+            --accent-hover: #c0392b;
+            --text-main: #ecf0f1;
+            --border: #34495e;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body { 
+            background: var(--bg-dark); 
+            color: var(--text-main); 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; 
+            gap: 20px; 
+            padding: 20px; 
+            height: 100vh;
+        }
+
+        .canvas-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-panel);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+
+        canvas { 
+            background: url('data:image/svg+xml;utf8,<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="8" height="8" fill="%232c3e50"/><rect x="8" y="8" width="8" height="8" fill="%232c3e50"/><rect x="8" width="8" height="8" fill="%2334495e"/><rect y="8" width="8" height="8" fill="%2334495e"/></svg>');
+            cursor: crosshair; 
+            image-rendering: pixelated; 
+            border: 2px solid var(--border); 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        .panel { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            min-width: 300px;
+            max-width: 400px;
+            background: var(--bg-panel);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            overflow-y: auto;
+        }
+
+        .control-group { 
+            background: var(--bg-dark); 
+            padding: 15px; 
+            border-radius: 6px; 
+            border: 1px solid var(--border);
+        }
+
+        .control-group h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #bdc3c7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        select, button { 
+            width: 100%;
+            padding: 10px; 
+            background: var(--accent); 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            margin-bottom: 5px;
+            transition: background 0.2s;
+        }
+
+        select { background: var(--bg-panel); border: 1px solid var(--border); margin-bottom: 0; }
+        button:hover { background: var(--accent-hover); }
+        
+        .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-tool { background: #7f8c8d; }
+        .btn-tool.active { background: var(--accent); box-shadow: inset 0 0 0 2px rgba(255,255,255,0.2); }
+
+        #paletteContainer { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .palette-btn { 
+            width: 32px; height: 32px; 
+            border: 2px solid rgba(255,255,255,0.1); 
+            cursor: pointer; 
+            border-radius: 4px; 
+            transition: transform 0.1s;
+        }
+        .palette-btn:hover { transform: scale(1.1); }
+        .palette-btn.selected { border-color: white; transform: scale(1.1); box-shadow: 0 0 10px rgba(255,255,255,0.5); }
+
+        textarea { 
+            width: 100%; 
+            height: 150px; 
+            font-family: monospace; 
+            font-size: 11px; 
+            background: var(--bg-dark); 
+            color: #a0aab5; 
+            border: 1px solid var(--border); 
+            padding: 10px; 
+            border-radius: 4px;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="canvas-container">
+        <!-- Lienzo de 512x512 para previsualizar la matriz de 64x64 a escala -->
+        <canvas id="editorCanvas" width="512" height="512"></canvas>
+    </div>
+    
+    <div class="panel">
+        <div class="control-group">
+            <h3>Librería de Clases</h3>
+            <select id="charSelect" onchange="cargarDesdeLibreria()">
+                <option value="empty">-- Lienzo en Blanco --</option>
+                <option value="SCOUT">Scout (Clásico)</option>
+                <option value="WIZARD">Wizard (Clásico)</option>
+                <option value="FIGHTER">Fighter (Clásico)</option>
+                <option value="CLERIC">Cleric (Nuevo Blockout)</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <h3>Control de Capas</h3>
+            <select id="layerSelect" onchange="cambiarCapa()">
+                <option value="base_body">1. Cuerpo Base (Fondo)</option>
+                <option value="armor">2. Ropa / Armadura</option>
+                <option value="headgear">3. Cabeza / Tocado</option>
+                <option value="weapon">4. Arma (Frente)</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <h3>Herramienta</h3>
+            <div class="tools-grid">
+                <button id="btnPincel" class="btn-tool active" onclick="setHerramienta('pincel')">Pincel</button>
+                <button id="btnBote" class="btn-tool" onclick="setHerramienta('bote')">Rellenar</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <h3>Paleta Activa</h3>
+            <div id="paletteContainer"></div>
+            <p style="font-size: 12px; color: #bdc3c7;">Selección: <strong id="currentColorLabel" style="color: white;">A</strong></p>
+        </div>
+        
+        <button onclick="exportarJSON()">Generar JSON Modular</button>
+        <textarea id="outputConsole" placeholder="El código JSON aparecerá aquí listo para tu motor..."></textarea>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('editorCanvas');
+        const ctx = canvas.getContext('2d');
+        const gridSize = 64;
+        const scale = canvas.width / gridSize;
+        
+        // Z-Index de pintura
+        const ordenRender = ["base_body", "armor", "headgear", "weapon"];
+        
+        // Estado Global
+        let paletaActiva = { " ": "transparent", "A": "#000000" };
+        let capas = {};
+        let capaActual = "base_body";
+        let pincelActual = "A";
+        let herramientaActiva = "pincel";
+        let isDrawing = false;
+
+        // Base de Datos de Clases
+        const libreriaPersonajes = {
+            "SCOUT": {
+                "paleta": { " ": "transparent", "A": "#000000", "B": "#8d6e63", "C": "#301b03", "D": "#ffdbac", "E": "#eeb677", "F": "#efb677", "G": "#7cb342", "H": "#558b2f", "I": "#33691e", "J": "#000402", "K": "#011e0c" },
+                "blueprint": [
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                AA                              ",
+                    "                              AAAAA                             ",
+                    "                         AAAAAABBBAAA                           ",
+                    "                         ABBBBBBBBCAA                           ",
+                    "                       AABBCCBBCCBCCA                           ",
+                    "                       ABBCCCCCBBBBCAA                          ",
+                    "                       ABBBACCCBBBBCCA                          ",
+                    "                       ABCBCAAAAAAAAAA                          ",
+                    "                      AACCAADDDDDDA                             ",
+                    "                      ABCAADDADDADA                             ",
+                    "                      ABCADDDADDADA                             ",
+                    "                      AAAADDDDDDDDA                             ",
+                    "                        AAADDDDDDDA                             ",
+                    "                        ACADEDDDDAA                             ",
+                    "                        ACADDEFEA                               ",
+                    "                        AAADDDDFA                               ",
+                    "                     AAAAAADDDDDAAAAAAA                         ",
+                    "                    AAGHGGGAAADDAAGGGGAAA                       ",
+                    "                   AAAAHHGGGGAAAAGHHGGAHA                       ",
+                    "                   AGGAAGHHGGGGGGGHHGAHHAA                      ",
+                    "                   AGGHAAAGGHHHHHGHHIAHHHA                      ",
+                    "                   AGGHAAAGGGGGGGHIAAAHHHA                      ",
+                    "                   AAAAAAAAAAAAAAAAHHAAAAA                      ",
+                    "                   AFFFFAGHHHHHHHHHHHAFFFA                      ",
+                    "                   AAAAAAGGGGGGGGHHHHAFDDA                      ",
+                    "                  ABBBBBAGGGGGGGGGGGHAAAAA                      ",
+                    "                   ABBBBAAAAAAAAAAAAAABBBBA                     ",
+                    "                   ABBBBABBBBBBBBBBBAABBBA                      ",
+                    "                   AAAAAABBBBBBBBBBBAABBBA                      ",
+                    "                   AFFFFAAAAAAAAAAAAAAAAAA                      ",
+                    "                   AFDDDAHHHHHHHHHGGHADDDA                      ",
+                    "                   AADDDAHHHHGGGGGGGHADDAA                      ",
+                    "                     AAAHHHGGGGGGGGGHAAAA                       ",
+                    "                      AAHGGGGGGGGGGGHA                          ",
+                    "                      AAHHGGGHHHHHHHHA                          ",
+                    "                      AAHHHHHHHHHHHHHA                          ",
+                    "                      AAAAAAAAAAAAAAAA                          ",
+                    "                       AJJJJA   AJJJJA                          ",
+                    "                       AKKJJA   AJJKKA                          ",
+                    "                       AKKKJA   AJKKKA                          ",
+                    "                       AJKKKA   AKKKJA                          ",
+                    "                      AAAAAAAA AAAAAAAA                         ",
+                    "                      ABBBBBAA AABBBBBA                         ",
+                    "                      AAAAAAAA AAAAAAAA                         ",
+                    "                       AAABBA   AAAABA                          ",
+                    "                       AAABBA   AAABBA                          ",
+                    "                      AAAABBA   AAABBAA                         ",
+                    "                      AAAABBA   AABBBBA                         ",
+                    "                      ABBBBBA   ABBBBBA                         ",
+                    "                      AAAAAAA   AAAAAAA                         ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                "
+                ]
+            },
+            "WIZARD": {
+                "paleta": { " ": "transparent", "A": "#000000", "B": "#8a2be2", "C": "#4f1c78", "D": "#ffffff", "E": "#5d4037", "F": "#ffdbac", "G": "#09eeff", "H": "#9969ab", "I": "#d395e9", "J": "#05eeff", "K": "#501c78" },
+                "blueprint": [
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                           AAAAAA                               ",
+                    "                          ABBBBBCAA                             ",
+                    "                         ABBBBCCCCCA                            ",
+                    "                       AABBBBBCCCCCCA                           ",
+                    "                       ACBBBBBAAAACCA       AAAA                ",
+                    "                       ACBBAAAAAAAACA       ADEAA               ",
+                    "                       ACBBAAAAAAAACA     AAADDEAAA             ",
+                    "                     AACCBAFFFFAFFACA     ADGAAEEEA             ",
+                    "                    AACCBBAFFFFFFFACA     AGGGADEAA             ",
+                    "                    ACCBBAAFFAFFAFACA     AAAAAEEA              ",
+                    "                   AABBBBAFFFAFFAFACA      AADEEEA              ",
+                    "                   ACBBBBAFFFFFFFFACA       AEEEAA              ",
+                    "                   ACBBBBAAFFFFFFFACA       AEEEA               ",
+                    "                   ABBBCCCAAAFFFAAACAA      AAEAA               ",
+                    "                   AAAAACCAAAFFFAAAAAAA      AEA                ",
+                    "                   AACCACCAAAFFFAAAACCCA     AEA                ",
+                    "                   ABBBAAAAAAAAAAAHACCBBA    AEA                ",
+                    "                  ABBBBCCCAHHHIHIHHACBBBBA   AEE                ",
+                    "                 ABBBBBCCCAHHHJHHHHACBBBBA   AEE                ",
+                    "                 ABBBBCCCAIIIJJJIHHAAABBBAA  AEE                ",
+                    "                 ABCBBCCAIIIIJJJIHHAAAAABBA  AEE                ",
+                    "                 AAABBCAAIIIIIJIIHHAAHHHAAAAAAEA                ",
+                    "                 AAAAAAAAIIIIIIIIHHAAHHHHIAAFAEA                ",
+                    "                 ABAAHHHAIIIIIIIIHHAAHHHHIAAFAAA                ",
+                    "                 ABAIIHHAIIIIIIHHHHAAHHHHIAAFFFA                ",
+                    "                 ABAIIHHAIIIIIHHHHHAAHHHIIAAFFFA                ",
+                    "                 ABAIIHHAAAAAAAAAAAAAHIHIIAAFFFA                ",
+                    "                 ABAIIHHAEEEEEEEEEEAAHIIIIAAAAAA                ",
+                    "                 ABAAAAAAEEEEEEEEEEAAAIIIIAA AEA                ",
+                    "                 ABAFFFFAAAAAAAAAAAAAAAIIIAA AEA                ",
+                    "                 ABAFFFFAAAABBBBBAAAAAAIIIAA AEA                ",
+                    "                 ABAAFFFAHHABBBBBAAAAAAAAIAA AEA                ",
+                    "                 ABBCAAAIIHABBBCBAAAAAKKAAAA AEA                ",
+                    "                 ABBCCAAIIHABBBCBAAAAAKKKBBA AEA                ",
+                    "                 ABBCCAAIHHABBBCBAAAHAKKKBBA AEA                ",
+                    "                 ABBCCAAIHHABCBBBAAAHAKKKBBA AEA                ",
+                    "                 ABBCCAAIHHABBBBBAAAHAKKKBBA AEA                ",
+                    "                ACBBCCAAIHHABBBCBAAAHAKKKBBA AEA                ",
+                    "               ACCBBCCAAIIIABBBBBAAAHAKBBBBA AEA                ",
+                    "               ACCBBCCAAAAAABBBBCAAHHAKBBKBA AEA                ",
+                    "               ABCBCCCAAHHHHABBBCAHHHAKBBKBA AEA                ",
+                    "               ABCBCCCAAHHHHAABBCHHHHAKBBKBA AEA                ",
+                    "              ABBCBCCCAAHHIHAAAAAHHHHAKBBBBA AEA                ",
+                    "             ABCBBBCCCAAAAAAACAAAAAAAAKBBBBA AEA                ",
+                    "            ACBBBBBBCCAAAAEEACCAAAAAEAKKBBBA AEA                ",
+                    "            ACBBBBBBCCAAAAEEACCAAAAEEAKKKAAA AEA                ",
+                    "             AABBBBBCCAAAAEEACCAAAAEEAAAAA   AEA                ",
+                    "              AAAAAAAAAAAAEEAAAAAAEEEEA      AEA                ",
+                    "                      AEEEEEA   AEEEEEA      AEA                ",
+                    "                      AAAAAAA   AAAAAAA      AAA                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                "
+                ]
+            },
+            "FIGHTER": {
+                "paleta": { " ": "transparent", "A": "#000000", "B": "#567194", "C": "#3a4e69", "D": "#253347", "E": "#ffdbac", "F": "#bdc3c7", "G": "#e4e7ec", "H": "#7f8c8d", "I": "#ffffff", "J": "#5d4037" },
+                "blueprint": [
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                           AAAAAA                               ",
+                    "                          ABBBBBBAA                             ",
+                    "                         ABBBBBBBBBA                            ",
+                    "                        ABBBBBBBBBCDA                           ",
+                    "                        ABBBBBBBBCCDA                           ",
+                    "                        ABBBAAAAAAADA                           ",
+                    "                        ABBBEEEEEEEDA                           ",
+                    "                        ABBBEEAEEAEDA                           ",
+                    "                        ABBBEEAEEAEDA                           ",
+                    "                        ABBBEEEEEEEDA                           ",
+                    "                        ABBBBBCCCCCDA                           ",
+                    "                        ABBBBBCCCCCDA                           ",
+                    "                       ACCBBBBCCCCCDA                           ",
+                    "                      AABBCBBBCCCCDDAA                          ",
+                    "                     AFGAABCBBCCCCDAAAA                         ",
+                    "                    AFFGFFACBBCCCCAAFFFA                        ",
+                    "                   AFFGFFFACCCCCCAHAGGFFA                       ",
+                    "                   AFFGFFFA AAAAAHHAGGGFFA                      ",
+                    "                  AFFGFFFFAHHHHHHHHAFGGGFA                      ",
+                    "                  AFFGFFFAHHHHHHHHHAFFGGFA                      ",
+                    "                  AGGGGGAHHHHHHHHHHAAAAAAA                      ",
+                    "                   AAAAAAFHHHHHHHHAGGGGGGGA                     ",
+                    "                   AFFFFAFHHHHHHHAGGCCCCCIGA                    ",
+                    "                   AHHFFAFFHHHHHHAGCCCCCCCGGA                   ",
+                    "                   AHHHFAFFFHHHHAICCCCCCCCCGA                   ",
+                    "                   AHHHFAFFFHHHHAICCCFFFCCCGA                   ",
+                    "                   AHHHHAAAAAAAAAGCCCFCFCCCGA                   ",
+                    "                   AHHHHAJJJJJJJAICCCFFFCCCGA                   ",
+                    "                   AAAAAAJJJJJJJAICCCCCCCCCGA                   ",
+                    "                   AEEEEAAAAAAAAAIICCCCCCCGGA                   ",
+                    "                   AEEEEAFHACCCCCAIICCCCCGGA                    ",
+                    "                   AAEEEAFHABBBBCCAIICCCGGA                     ",
+                    "                  ADCAAAFFHABBBBBCAAIICGGA                      ",
+                    "                 ADCCDDAFHHABBBBBCAAAIIGA                       ",
+                    "                 ACCCDDAFHHABCBBBCAAAAGA                        ",
+                    "                 ACCCDDAFHHABCBBBCAAHAA                         ",
+                    "                 ACCCDDAFHHABCBBBCAAHA                          ",
+                    "                ACCCCDDAFHHABCBCBCAAHA                          ",
+                    "               ADCDCDDDAFHHABBBCBCAAHA                          ",
+                    "               ACCDCCDDAAAAABBBCBCAAAA                          ",
+                    "               ACCCCCDDACCBBABBCBACCBA                          ",
+                    "               ACCCCCDDACCBBAABCACCCBA                          ",
+                    "              ACCDCCCDDACCBBADAAACCCBA                          ",
+                    "             ADCCCCDCDDAAAAAADDDAAAAAA                          ",
+                    "            ACCCCCCDDDDAAAJJADDDAAAAJA                          ",
+                    "            ACCDCCCCCDDAAAJJADDDAAAJJA                          ",
+                    "             AADCCDDDDAAAAJJADDDAAAJJAA                         ",
+                    "              AAAAAAAAAAAAJJAAAAAAJJJJA                         ",
+                    "                      AJJJJJA   AJJJJJA                         ",
+                    "                      AAAAAAA   AAAAAAA                         ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                "
+                ]
+            },
+            "CLERIC": {
+                "paleta": { " ": "transparent", "A": "#000000", "B": "#fdf5e6", "C": "#d4ac0d", "D": "#ffdbac", "E": "#5d4037", "F": "#ffffff" },
+                "blueprint": [
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                              AAAA                              ",
+                    "                             ADDDDA                             ",
+                    "                            ADDDDDDA                            ",
+                    "                            ADDDDDDA                            ",
+                    "                            ADDDDDDA                            ",
+                    "                             ADDDDA                             ",
+                    "                              AAAA                              ",
+                    "                            AABBBBAA                            ",
+                    "                           AABBBBBBAA                           ",
+                    "                          AABBBBBBBBAA                          ",
+                    "                         AABBBBBBBBBBAA                         ",
+                    "                        AABBBBBBBBBBBBAA                        ",
+                    "                        AABBBBBBBBBBBBAA                        ",
+                    "                       AABBBBBBBBBBBBBBAA                       ",
+                    "                       AABBBBBBBBBBBBBBAA                       ",
+                    "                       AABBBAAAAAAAABBBAA                       ",
+                    "                       AABBADDDDDDDDAABBA                       ",
+                    "                       AABAADEEEEEEEDAABA                       ",
+                    "                        AAAADEEFFFEEEDAAA                       ",
+                    "                           ADEEFFFFFEEDA                        ",
+                    "                           ADEEFFFFFEEDA                        ",
+                    "                           ADEEEEEEEEEDA                        ",
+                    "                            ADDDDDDDDDA                         ",
+                    "                            AAAAAAAAAAA                         ",
+                    "                           AABBBBBBBBBBAA                       ",
+                    "                           AABBCBBBBCBBAA                       ",
+                    "                          AABBBCCBBCCBBBAA                      ",
+                    "                          AABBBBCBBCBBBBAA                      ",
+                    "                         AABBBBBCBBCBBBBBAA                     ",
+                    "                         AABBBBBCBBCBBBBBAA                     ",
+                    "                        AABBBBBBCBBCBBBBBBAA                    ",
+                    "                        AABBBBBBCBBCBBBBBBAA                    ",
+                    "                       AABBBBBBBCBBCBBBBBBBAA                   ",
+                    "                       AABBBBBBBCBBCBBBBBBBAA                   ",
+                    "                      AABBBBBBBBCBBCBBBBBBBBAA                  ",
+                    "                      AABBBBBBBBCBBCBBBBBBBBAA                  ",
+                    "                     AABBBBBBBBBCBBCBBBBBBBBBAA                 ",
+                    "                     AABBBBBBBBBCBBCBBBBBBBBBAA                 ",
+                    "                    AABBBBBBBBBBCBBCBBBBBBBBBBAA                ",
+                    "                    AABBBBBBBBBBCBBCBBBBBBBBBBAA                ",
+                    "                   AABBBBBBBBBBBCBBCBBBBBBBBBBBAA               ",
+                    "                   AABBBBBBBBBBBCBBCBBBBBBBBBBBAA               ",
+                    "                  AABBBBBBBBBBBBCBBCBBBBBBBBBBBBAA              ",
+                    "                  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA              ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                ",
+                    "                                                                "
+                ]
+            }
+        };
+
+        // 1. INICIALIZAR Y GESTIONAR CAPAS
+        function inicializarCapas() {
+            ordenRender.forEach(capa => {
+                capas[capa] = Array.from({ length: gridSize }, () => Array(gridSize).fill(" "));
+            });
+            construirPaletaUI();
+            renderizarCanvas();
+        }
+
+        function cargarDesdeLibreria() {
+            const selector = document.getElementById('charSelect').value;
+            if (selector === "empty") {
+                paletaActiva = { " ": "transparent", "A": "#000000", "B": "#ffffff" };
+                inicializarCapas();
+                return;
+            }
+
+            const personaje = libreriaPersonajes[selector];
+            paletaActiva = personaje.paleta;
+            
+            ordenRender.forEach(capa => {
+                capas[capa] = Array.from({ length: gridSize }, () => Array(gridSize).fill(" "));
+            });
+
+            if (personaje.blueprint) {
+                capas["base_body"] = personaje.blueprint.map(fila => fila.split(""));
+            }
+
+            construirPaletaUI();
+            renderizarCanvas();
+        }
+
+        // 2. RENDERIZADO VISUAL
+        function renderizarCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ordenRender.forEach(nombreCapa => {
+                const grid = capas[nombreCapa];
+                for (let y = 0; y < gridSize; y++) {
+                    for (let x = 0; x < gridSize; x++) {
+                        const char = grid[y][x];
+                        if (char !== " " && paletaActiva[char]) {
+                            ctx.fillStyle = paletaActiva[char];
+                            ctx.fillRect(x * scale, y * scale, scale, scale);
+                        }
+                    }
+                }
+            });
+        }
+
+        // 3. INTERACCIÓN PINCEL / BOTE
+        function manejarClickCanvas(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / scale);
+            const y = Math.floor((e.clientY - rect.top) / scale);
+            
+            if (x < 0 || x >= gridSize || y < 0 || y >= gridSize) return;
+
+            const grid = capas[capaActual];
+
+            if (herramientaActiva === "pincel") {
+                if (grid[y][x] !== pincelActual) {
+                    grid[y][x] = pincelActual;
+                    renderizarCanvas();
+                }
+            } else if (herramientaActiva === "bote") {
+                algoritmoFloodFill(x, y, grid[y][x], pincelActual, grid);
+                renderizarCanvas();
+            }
+        }
+
+        function algoritmoFloodFill(startX, startY, targetChar, replacementChar, grid) {
+            if (targetChar === replacementChar) return;
+            const queue = [[startX, startY]];
+            
+            while (queue.length > 0) {
+                const [x, y] = queue.shift();
+                if (x < 0 || x >= gridSize || y < 0 || y >= gridSize) continue;
+                if (grid[y][x] !== targetChar) continue;
+                
+                grid[y][x] = replacementChar;
+                queue.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+            }
+        }
+
+        // Eventos
+        canvas.addEventListener('mousedown', (e) => { isDrawing = true; manejarClickCanvas(e); });
+        canvas.addEventListener('mousemove', (e) => { if (isDrawing && herramientaActiva === 'pincel') manejarClickCanvas(e); });
+        window.addEventListener('mouseup', () => { isDrawing = false; });
+
+        // 4. INTERFAZ
+        function cambiarCapa() { capaActual = document.getElementById('layerSelect').value; }
+
+        function setHerramienta(herramienta) {
+            herramientaActiva = herramienta;
+            document.querySelectorAll('.btn-tool').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(herramienta === 'pincel' ? 'btnPincel' : 'btnBote').classList.add('active');
+        }
+
+        function construirPaletaUI() {
+            const container = document.getElementById('paletteContainer');
+            container.innerHTML = "";
+            let firstKey = null;
+
+            for (const [key, color] of Object.entries(paletaActiva)) {
+                if (!firstKey && key !== " ") firstKey = key;
+                
+                const btn = document.createElement('div');
+                btn.className = 'palette-btn';
+                btn.style.background = key === " " ? "url('data:image/svg+xml;utf8,<svg width=\"8\" height=\"8\" viewBox=\"0 0 8 8\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"4\" height=\"4\" fill=\"%23ccc\"/><rect x=\"4\" y=\"4\" width=\"4\" height=\"4\" fill=\"%23ccc\"/><rect x=\"4\" width=\"4\" height=\"4\" fill=\"%23fff\"/><rect y=\"4\" width=\"4\" height=\"4\" fill=\"%23fff\"/></svg>')" : color;
+                
+                if (key === pincelActual) btn.classList.add('selected');
+                
+                btn.onclick = () => {
+                    pincelActual = key;
+                    document.getElementById('currentColorLabel').innerText = key === " " ? "Borrador" : key;
+                    document.querySelectorAll('.palette-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                };
+                container.appendChild(btn);
+            }
+            
+            if (pincelActual === "A" && !paletaActiva["A"]) {
+                pincelActual = firstKey || " ";
+            }
+        }
+
+        // 5. EXPORTACIÓN
+        function exportarJSON() {
+            const payloadFinal = { paleta: paletaActiva, capas: {} };
+            
+            ordenRender.forEach(capa => {
+                payloadFinal.capas[capa] = capas[capa].map(fila => fila.join(""));
+            });
+            
+            const finalJSON = {
+                name: document.getElementById('charSelect').value !== "empty" ? document.getElementById('charSelect').value : "NEW_CLASS",
+                category: "characters",
+                payload: payloadFinal
+            };
+            
+            document.getElementById('outputConsole').value = JSON.stringify(finalJSON, null, 2);
+        }
+
+        // Arrancar
+        inicializarCapas();
+    </script>
+</body>
+</html>
