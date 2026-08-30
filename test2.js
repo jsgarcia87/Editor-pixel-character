@@ -1,395 +1,4 @@
-<!DOCTYPE html>
-<html lang="es">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Taskoria — Character Editor 64×64</title>
-
-    <style>
-        :root {
-            --bg: #15191c;
-            --panel: #232a2f;
-            --panel-dark: #1b2024;
-            --border: #39434a;
-            --text: #edf1f3;
-            --muted: #9da8ae;
-            --accent: #d86d50;
-            --accent-hover: #b9573d;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            min-height: 100vh;
-            background: var(--bg);
-            color: var(--text);
-            font-family: Inter, Segoe UI, Arial, sans-serif;
-
-            display: grid;
-            grid-template-columns: minmax(520px, 1fr) 380px;
-            gap: 18px;
-
-            padding: 18px;
-        }
-
-        .stage {
-            min-width: 0;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-
-            padding: 20px;
-        }
-
-        canvas {
-            width: min(82vh, 760px);
-            height: min(82vh, 760px);
-
-            image-rendering: pixelated;
-
-            background:
-                linear-gradient(45deg, #273036 25%, transparent 25%),
-                linear-gradient(-45deg, #273036 25%, transparent 25%),
-                linear-gradient(45deg, transparent 75%, #273036 75%),
-                linear-gradient(-45deg, transparent 75%, #273036 75%);
-
-            background-size: 16px 16px;
-            background-position:
-                0 0,
-                0 8px,
-                8px -8px,
-                -8px 0;
-
-            border: 2px solid var(--border);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, .45);
-
-            cursor: crosshair;
-        }
-
-        .panel {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-
-            padding: 16px;
-
-            overflow-y: auto;
-        }
-
-        h1 {
-            font-size: 19px;
-            margin-bottom: 4px;
-        }
-
-        .subtitle {
-            color: var(--muted);
-            font-size: 12px;
-            margin-bottom: 16px;
-        }
-
-        .group {
-            background: var(--panel-dark);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-
-            padding: 12px;
-            margin-bottom: 12px;
-        }
-
-        .group h3 {
-            color: var(--muted);
-
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-
-            margin-bottom: 9px;
-        }
-
-        select,
-        button,
-        textarea {
-            font-family: inherit;
-        }
-
-        select,
-        button {
-            width: 100%;
-
-            padding: 10px;
-
-            border-radius: 6px;
-            border: 1px solid var(--border);
-
-            background: #2b343a;
-            color: var(--text);
-        }
-
-        button {
-            cursor: pointer;
-            font-weight: 700;
-        }
-
-        button:hover {
-            background: #364149;
-        }
-
-        button.primary {
-            background: var(--accent);
-            border-color: var(--accent);
-        }
-
-        button.primary:hover {
-            background: var(--accent-hover);
-        }
-
-        .grid2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        .palette {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 7px;
-        }
-
-        .swatch {
-            width: 31px;
-            height: 31px;
-
-            border-radius: 5px;
-            border: 2px solid rgba(255, 255, 255, .12);
-
-            cursor: pointer;
-        }
-
-        .swatch.active {
-            border-color: white;
-
-            box-shadow:
-                0 0 0 2px var(--accent),
-                0 0 10px rgba(255, 255, 255, .2);
-        }
-
-        .info {
-            font-size: 12px;
-            line-height: 1.55;
-            color: #cbd3d7;
-        }
-
-        .info strong {
-            color: white;
-        }
-
-        .tag {
-            display: inline-block;
-
-            padding: 3px 6px;
-            margin-top: 5px;
-
-            border-radius: 4px;
-            border: 1px solid var(--border);
-
-            color: #cbd3d7;
-            font-size: 11px;
-        }
-
-        textarea {
-            width: 100%;
-            height: 190px;
-
-            margin-top: 10px;
-
-            resize: vertical;
-
-            background: #101416;
-            color: #b9c5ca;
-
-            border: 1px solid var(--border);
-            border-radius: 6px;
-
-            padding: 9px;
-
-            font-family: monospace;
-            font-size: 11px;
-        }
-
-        .status {
-            margin-top: 9px;
-
-            font-size: 11px;
-            color: var(--muted);
-        }
-
-        @media(max-width:900px) {
-            body {
-                grid-template-columns: 1fr;
-            }
-
-            canvas {
-                width: 75vw;
-                height: 75vw;
-            }
-        }
-    </style>
-</head>
-
-<body>
-
-    <div class="stage">
-        <canvas id="editorCanvas" width="512" height="512"></canvas>
-    </div>
-
-    <script src="data.js"></script>
-
-    <div class="panel">
-
-        <h1>Taskoria Character Library</h1>
-
-        <div class="subtitle">
-            Pixel Art Character Editor · 64×64
-        </div>
-
-        <div class="group">
-            <h3>Equipamiento (Clase)</h3>
-            <select id="characterSelect">
-                <!-- Will be populated dynamically -->
-            </select>
-        </div>
-
-        <div class="group">
-            <h3>Cuerpo (Género)</h3>
-            <select id="genderSelect">
-                <option value="MAN">Hombre</option>
-                <option value="WOMAN">Mujer</option>
-            </select>
-        </div>
-
-        <div class="group">
-            <h3>Brazos</h3>
-            <select id="armsSelect">
-                <!-- Will be populated dynamically -->
-            </select>
-        </div>
-
-        <div class="group">
-            <h3>Pelo</h3>
-            <select id="hairSelect">
-                <!-- Will be populated dynamically -->
-            </select>
-        </div>
-
-        <div class="group" id="equipmentGroup" style="display:none;">
-            <h3>Piezas Equipadas</h3>
-            <div style="margin-bottom: 5px;">
-                <label style="font-size: 12px; color: #aeb5b8; display:block;">Capa</label>
-                <select id="capeSelect" style="width:100%;"></select>
-            </div>
-            <div style="margin-bottom: 5px;">
-                <label style="font-size: 12px; color: #aeb5b8; display:block;">Cabeza</label>
-                <select id="headSelect" style="width:100%;"></select>
-            </div>
-            <div style="margin-bottom: 5px;">
-                <label style="font-size: 12px; color: #aeb5b8; display:block;">Torso</label>
-                <select id="torsoSelect" style="width:100%;"></select>
-            </div>
-            <div style="margin-bottom: 5px;">
-                <label style="font-size: 12px; color: #aeb5b8; display:block;">Piernas</label>
-                <select id="legsSelect" style="width:100%;"></select>
-            </div>
-            <div>
-                <label style="font-size: 12px; color: #aeb5b8; display:block;">Arma</label>
-                <select id="weaponSelect" style="width:100%;"></select>
-            </div>
-        </div>
-
-        <div class="group">
-            <h3>Capa editable</h3>
-            <select id="layerSelect">
-                <option value="cape">0 · Capa</option>
-                <option value="base_body">1 · Cuerpo Base</option>
-                <option value="arms">2 · Brazos</option>
-                <option value="legs">3 · Piernas</option>
-                <option value="torso">4 · Torso</option>
-                <option value="hair">5 · Pelo</option>
-                <option value="head">6 · Cabeza</option>
-                <option value="weapon">7 · Arma</option>
-            </select>
-        </div>
-
-        <div class="group">
-
-            <h3>Herramienta</h3>
-
-            <div class="grid2">
-
-                <button id="brushButton" class="primary">
-                    Pincel
-                </button>
-
-                <button id="fillButton">
-                    Rellenar
-                </button>
-
-            </div>
-
-        </div>
-
-        <div class="group">
-
-            <h3>Paleta</h3>
-
-            <div id="palette" class="palette">
-            </div>
-
-            <div class="status">
-
-                Color seleccionado:
-                <strong id="colorLabel">A</strong>
-
-            </div>
-
-        </div>
-
-        <div class="group">
-
-            <h3>Identidad visual</h3>
-
-            <div id="characterInfo" class="info">
-            </div>
-
-        </div>
-
-        <div class="grid2">
-            <button onclick="restoreCharacter()">Restaurar</button>
-            <button class="primary" onclick="exportJSON()">Exportar Personaje Completo</button>
-        </div>
-        
-        <div class="grid2" style="margin-top:8px">
-            <button onclick="copyJSON()">Copiar JSON Completo</button>
-            <button class="primary" onclick="copyLayerJSON()">Copiar Solo Capa</button>
-        </div>
-
-        <textarea id="output" placeholder="El JSON aparecerá aquí...">
-    </textarea>
-
-    </div>
-
-
-    <script>
 
         const SIZE = 64;
 
@@ -651,9 +260,11 @@
 
 
         function cloneGrid(grid) {
+
             return grid.map(
-                row => Array.isArray(row) ? row.slice() : row.split('')
+                row => row.slice()
             );
+
         }
 
 
@@ -661,20 +272,15 @@
 
             return {
 
-                cape:
-                    layers.cape ? cloneGrid(layers.cape) : blankGrid(),
                 base_body:
                     cloneGrid(layers.base_body),
-                arms:
-                    layers.arms ? cloneGrid(layers.arms) : blankGrid(),
-                legs:
-                    cloneGrid(layers.legs),
-                torso:
-                    cloneGrid(layers.torso),
-                hair:
-                    layers.hair ? cloneGrid(layers.hair) : blankGrid(),
-                head:
-                    cloneGrid(layers.head),
+
+                armor:
+                    cloneGrid(layers.armor),
+
+                headgear:
+                    cloneGrid(layers.headgear),
+
                 weapon:
                     cloneGrid(layers.weapon)
 
@@ -2338,246 +1944,60 @@
 
 
         /* =========================================================
-           ESTADO Y CONSTRUCCIÓN DE AVATAR
+           LIBRERÍA
         ========================================================= */
 
-        let currentGender = "MAN";
-        let currentCharacter = "FIGHTER";
-        let currentLayer = "base_body";
-        let currentColor = "A";
-        let currentTool = "brush";
-        let layers = {};
+        
 
-        function buildAvatar() {
-            layers = {
-                cape: blankGrid(),
-                base_body: cloneGrid(BASE_BODIES[currentGender] || BASE_BODIES["MAN"]),
-                arms: blankGrid(),
-                legs: blankGrid(),
-                torso: blankGrid(),
-                hair: blankGrid(),
-                head: blankGrid(),
-                weapon: blankGrid()
-            };
 
-            if (typeof AVAILABLE_EQUIPMENT !== "undefined" && AVAILABLE_EQUIPMENT[currentCharacter]) {
-                const eq = AVAILABLE_EQUIPMENT[currentCharacter];
-                
-                const capeVal = document.getElementById("capeSelect").value;
-                if (capeVal) {
-                    const item = eq.cape.find(i => i.name === capeVal);
-                    if (item) layers.cape = cloneGrid(item.grid);
-                }
-                
-                const headVal = document.getElementById("headSelect").value;
-                if (headVal) {
-                    const item = eq.head.find(i => i.name === headVal);
-                    if (item) layers.head = cloneGrid(item.grid);
-                }
-                
-                const torsoVal = document.getElementById("torsoSelect").value;
-                if (torsoVal) {
-                    const item = eq.torso.find(i => i.name === torsoVal);
-                    if (item) layers.torso = cloneGrid(item.grid);
-                }
-                
-                const legsVal = document.getElementById("legsSelect").value;
-                if (legsVal) {
-                    const item = eq.legs.find(i => i.name === legsVal);
-                    if (item) layers.legs = cloneGrid(item.grid);
-                }
-                
-                const weaponVal = document.getElementById("weaponSelect").value;
-                if (weaponVal) {
-                    const item = eq.weapon.find(i => i.name === weaponVal);
-                    if (item) layers.weapon = cloneGrid(item.grid);
-                }
-            } else if (typeof EQUIPMENT_SETS !== "undefined" && EQUIPMENT_SETS[currentCharacter]) {
-                const eq = EQUIPMENT_SETS[currentCharacter];
-                if (eq.cape) layers.cape = cloneGrid(eq.cape);
-                if (eq.legs) layers.legs = cloneGrid(eq.legs);
-                if (eq.torso) layers.torso = cloneGrid(eq.torso);
-                if (eq.head) layers.head = cloneGrid(eq.head);
-                if (eq.weapon) layers.weapon = cloneGrid(eq.weapon);
-            }
+        /* =========================================================
+           ESTADO
+        ========================================================= */
 
-            const armsVal = document.getElementById("armsSelect").value;
-            if (armsVal && typeof AVAILABLE_ARMS !== "undefined") {
-                const item = AVAILABLE_ARMS.find(i => i.name === armsVal);
-                if (item) layers.arms = cloneGrid(item.grid);
-            }
+        let currentCharacter =
+            "RANGER";
 
-            const hairVal = document.getElementById("hairSelect").value;
-            if (hairVal && typeof AVAILABLE_HAIR !== "undefined") {
-                const item = AVAILABLE_HAIR.find(i => i.name === hairVal);
-                if (item) layers.hair = cloneGrid(item.grid);
-            }
-        }
+        let currentLayer =
+            "base_body";
 
-        buildAvatar();
+        let currentColor =
+            "A";
+
+        let currentTool =
+            "brush";
+
+        let layers =
+            cloneLayers(
+                library[currentCharacter].layers
+            );
+
 
         /* =========================================================
            UI
         ========================================================= */
 
-        const characterSelect = document.getElementById("characterSelect");
-        const genderSelect = document.getElementById("genderSelect");
-        const armsSelect = document.getElementById("armsSelect");
-        const hairSelect = document.getElementById("hairSelect");
-        const capeSelect = document.getElementById("capeSelect");
-        const layerSelect = document.getElementById("layerSelect");
-        const palette = document.getElementById("palette");
-        const output = document.getElementById("output");
+        const characterSelect =
+            document.getElementById(
+                "characterSelect"
+            );
+
+        const layerSelect =
+            document.getElementById(
+                "layerSelect"
+            );
+
+        const palette =
+            document.getElementById(
+                "palette"
+            );
+
+        const output =
+            document.getElementById(
+                "output"
+            );
+
+
         
-        const headSelect = document.getElementById("headSelect");
-        const torsoSelect = document.getElementById("torsoSelect");
-        const legsSelect = document.getElementById("legsSelect");
-        const weaponSelect = document.getElementById("weaponSelect");
-        const equipmentGroup = document.getElementById("equipmentGroup");
-
-        // Populate dynamic classes
-        if (typeof AVAILABLE_EQUIPMENT !== "undefined") {
-            characterSelect.innerHTML = "";
-            Object.keys(AVAILABLE_EQUIPMENT).forEach(cls => {
-                const opt = document.createElement("option");
-                opt.value = cls;
-                opt.textContent = cls;
-                characterSelect.appendChild(opt);
-            });
-            currentCharacter = Object.keys(AVAILABLE_EQUIPMENT)[0];
-        }
-
-        characterSelect.value = currentCharacter;
-        genderSelect.value = currentGender;
-
-        if (typeof AVAILABLE_ARMS !== "undefined") {
-            armsSelect.innerHTML = '<option value="">Ninguno</option>';
-            AVAILABLE_ARMS.forEach(item => {
-                const opt = document.createElement("option");
-                opt.value = item.name;
-                opt.textContent = item.name;
-                armsSelect.appendChild(opt);
-            });
-            if (AVAILABLE_ARMS.length > 0) armsSelect.value = AVAILABLE_ARMS[0].name;
-        }
-
-        if (typeof AVAILABLE_HAIR !== "undefined") {
-            hairSelect.innerHTML = '<option value="">Ninguno</option>';
-            AVAILABLE_HAIR.forEach(item => {
-                const opt = document.createElement("option");
-                opt.value = item.name;
-                opt.textContent = item.name;
-                hairSelect.appendChild(opt);
-            });
-            if (AVAILABLE_HAIR.length > 0) hairSelect.value = AVAILABLE_HAIR[0].name;
-        }
-
-        function updateEquipmentDropdowns() {
-            if (typeof AVAILABLE_EQUIPMENT === "undefined" || !AVAILABLE_EQUIPMENT[currentCharacter]) {
-                equipmentGroup.style.display = "none";
-                return;
-            }
-            equipmentGroup.style.display = "block";
-            const eq = AVAILABLE_EQUIPMENT[currentCharacter];
-            
-            const populate = (select, items) => {
-                select.innerHTML = '<option value="">Ninguno</option>';
-                items.forEach(item => {
-                    const opt = document.createElement("option");
-                    opt.value = item.name;
-                    opt.textContent = item.name;
-                    select.appendChild(opt);
-                });
-                if (items.length > 0) {
-                    select.value = items[0].name;
-                }
-            };
-            
-            populate(capeSelect, eq.cape);
-            populate(headSelect, eq.head);
-            populate(torsoSelect, eq.torso);
-            populate(legsSelect, eq.legs);
-            populate(weaponSelect, eq.weapon);
-        }
-
-        [genderSelect, armsSelect, hairSelect, characterSelect, capeSelect, headSelect, torsoSelect, legsSelect, weaponSelect].forEach(select => {
-            select.addEventListener("change", (e) => {
-                if (e.target.id === "genderSelect") {
-                    currentGender = e.target.value;
-                } else if (e.target.id === "characterSelect") {
-                    currentCharacter = e.target.value;
-                    updateEquipmentDropdowns();
-                }
-                
-                buildAvatar();
-                render();
-            });
-        });
-        
-        updateEquipmentDropdowns();
-
-
-        /* =========================================================
-           PALETA UI
-        ========================================================= */
-
-        function buildPalette() {
-
-            palette.innerHTML = "";
-
-            Object.entries(PALETTE)
-                .forEach(([key, color]) => {
-
-                    const button =
-                        document.createElement(
-                            "div"
-                        );
-
-                    button.className =
-                        "swatch";
-
-                    if (
-                        key === currentColor
-                    ) {
-
-                        button.classList.add(
-                            "active"
-                        );
-
-                    }
-
-                    button.style.background =
-                        color;
-
-                    button.title =
-                        key +
-                        " · " +
-                        color;
-
-                    button.onclick =
-                        () => {
-
-                            currentColor =
-                                key;
-
-                            document
-                                .getElementById(
-                                    "colorLabel"
-                                )
-                                .textContent =
-                                key;
-
-                            buildPalette();
-
-                        };
-
-                    palette.appendChild(
-                        button
-                    );
-
-                });
-
-        }
 
 
         /* =========================================================
@@ -2646,13 +2066,9 @@
 
             const renderOrder = [
 
-                "cape",
                 "base_body",
-                "arms",
-                "legs",
-                "torso",
-                "hair",
-                "head",
+                "armor",
+                "headgear",
                 "weapon"
 
             ];
@@ -2680,17 +2096,13 @@
                                 grid[y][x];
 
                             if (
-                                colorKey === " " || colorKey === "transparent"
+                                colorKey === " "
                             ) continue;
 
-                            let color =
+                            const color =
                                 PALETTE[
                                 colorKey
                                 ];
-
-                            if (!color && colorKey && colorKey.startsWith("#")) {
-                                color = colorKey;
-                            }
 
                             if (!color) continue;
 
@@ -2919,32 +2331,22 @@
            CAMBIO DE PERSONAJE
         ========================================================= */
 
-        characterSelect.addEventListener(
-            "change",
-            event => {
-                currentCharacter = event.target.value;
-                updateEquipmentDropdowns();
-                buildAvatar();
-                currentLayer = "base_body";
-                layerSelect.value = currentLayer;
-                updateInfo();
-                render();
-            }
-        );
+        
+        const genderSelect = document.getElementById("genderSelect");
+        
+        characterSelect.addEventListener("change", event => {
+            currentCharacter = event.target.value;
+            buildAvatar();
+            updateInfo();
+            render();
+        });
 
-        genderSelect.addEventListener(
-            "change",
-            event => {
+        genderSelect.addEventListener("change", event => {
+            currentGender = event.target.value;
+            buildAvatar();
+            render();
+        });
 
-                currentGender =
-                    event.target.value;
-
-                buildAvatar();
-
-                render();
-
-            }
-        );
 
 
         /* =========================================================
@@ -3024,7 +2426,13 @@
 
         function restoreCharacter() {
 
-            buildAvatar();
+            layers =
+                cloneLayers(
+                    library[
+                        currentCharacter
+                    ].layers
+                );
+
             render();
 
         }
@@ -3151,6 +2559,7 @@
            COPIAR
         ========================================================= */
 
+
         function exportLayerJSON() {
             const payload = {
                 palette: PALETTE,
@@ -3202,8 +2611,4 @@
 
         render();
 
-    </script>
-
-</body>
-
-</html>
+    
