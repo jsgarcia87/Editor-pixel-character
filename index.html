@@ -331,6 +331,19 @@
         </div>
 
         <div class="group">
+            <h3>Calco</h3>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer;">
+                <input type="checkbox" id="calcoToggle">
+                Aislar capa (cuerpo base como guía)
+            </label>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--muted);">
+                <span>Opacidad</span>
+                <input type="range" id="calcoOpacity" min="10" max="90" value="40" step="5" style="flex:1;">
+                <span id="calcoOpacityLabel" style="width:34px;text-align:right;">40%</span>
+            </div>
+        </div>
+
+        <div class="group">
 
             <h3>Herramienta</h3>
 
@@ -2347,6 +2360,8 @@
         let currentColor = "A";
         let currentTool = "brush";
         let layers = {};
+        let calcoMode = false;
+        let calcoOpacity = 0.4;
 
         function buildAvatar() {
             layers = {
@@ -2658,11 +2673,26 @@
             ];
 
 
+            /* Modo calco: solo se pinta el cuerpo base (a opacidad reducida)
+               y la capa que se está editando. El resto se oculta para no
+               competir visualmente con el trazo. Si la capa editada ES el
+               cuerpo base, el calco no aplica (se ve todo normal). */
+
+            const isCalco = calcoMode && currentLayer !== "base_body";
+
+
             renderOrder.forEach(
                 layerName => {
 
+                    if (isCalco) {
+                        if (layerName !== "base_body" && layerName !== currentLayer) return;
+                    }
+
                     const grid =
                         layers[layerName];
+
+                    const dim = isCalco && layerName === "base_body";
+                    ctx.globalAlpha = dim ? calcoOpacity : 1;
 
                     for (
                         let y = 0;
@@ -2710,6 +2740,8 @@
 
                 }
             );
+
+            ctx.globalAlpha = 1;
 
         }
 
@@ -2958,8 +2990,30 @@
                 currentLayer =
                     event.target.value;
 
+                render();
+
             }
         );
+
+
+        /* =========================================================
+           MODO CALCO
+        ========================================================= */
+
+        const calcoToggle = document.getElementById("calcoToggle");
+        const calcoOpacityInput = document.getElementById("calcoOpacity");
+        const calcoOpacityLabel = document.getElementById("calcoOpacityLabel");
+
+        calcoToggle.addEventListener("change", event => {
+            calcoMode = event.target.checked;
+            render();
+        });
+
+        calcoOpacityInput.addEventListener("input", event => {
+            calcoOpacity = Number(event.target.value) / 100;
+            calcoOpacityLabel.textContent = event.target.value + "%";
+            if (calcoMode) render();
+        });
 
 
         /* =========================================================
