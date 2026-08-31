@@ -386,9 +386,40 @@
 
         </div>
 
+        <div class="group">
+            <h3>Rampa tintable (B/C/D)</h3>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">
+                Los 3 hex que el jugador podrá tintar. Se les asigna B (oscuro), C (medio), D (claro) al hornear.
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;font-size:12px;">
+                <label style="display:flex;flex-direction:column;align-items:center;flex:1;">
+                    <span>B · oscuro</span>
+                    <input type="color" id="rampB" value="#253347" style="width:100%;height:32px;border:none;background:transparent;cursor:pointer;">
+                </label>
+                <label style="display:flex;flex-direction:column;align-items:center;flex:1;">
+                    <span>C · medio</span>
+                    <input type="color" id="rampC" value="#3a4e69" style="width:100%;height:32px;border:none;background:transparent;cursor:pointer;">
+                </label>
+                <label style="display:flex;flex-direction:column;align-items:center;flex:1;">
+                    <span>D · claro</span>
+                    <input type="color" id="rampD" value="#567194" style="width:100%;height:32px;border:none;background:transparent;cursor:pointer;">
+                </label>
+            </div>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-top:8px;cursor:pointer;">
+                <input type="checkbox" id="rampEnabled" checked>
+                Forzar rampa al hornear
+            </label>
+        </div>
+
         <div class="grid2">
             <button onclick="restoreCharacter()">Restaurar</button>
             <button class="primary" onclick="exportJSON()">Exportar Personaje Completo</button>
+        </div>
+
+        <div class="grid2" style="margin-top:8px">
+            <button class="primary" onclick="exportBakedTaskoria()" style="grid-column:1 / -1;">
+                Exportar Sprite Baked (Taskoria)
+            </button>
         </div>
         
         <div class="grid2" style="margin-top:8px">
@@ -3198,6 +3229,110 @@
                     2
                 );
 
+        }
+
+
+        /* =========================================================
+           EXPORT BAKED (formato Taskoria)
+
+           Aplana las 8 capas en un único blueprint 64×64, envuelto con
+           name/category/source/tool/payload. La paleta se recompone con
+           solo los colores realmente presentes; A queda reservado para
+           el contorno #000000 y el resto usa letras consecutivas desde B
+           en orden de aparición.
+        ========================================================= */
+
+        function exportBakedTaskoria() {
+
+            const renderOrder = [
+                "cape",
+                "base_body",
+                "arms",
+                "legs",
+                "torso",
+                "hair",
+                "head",
+                "weapon"
+            ];
+
+            /* Resuelve un char de capa a un hex, o null si es transparente. */
+            const resolve = (ch) => {
+                if (ch === " " || ch === "transparent" || ch == null) return null;
+                if (typeof ch === "string" && ch.startsWith("#")) return ch.toLowerCase();
+                const c = PALETTE[ch];
+                return c ? c.toLowerCase() : null;
+            };
+
+            /* Compone: para cada pixel, el hex de la capa superior no vacía. */
+            const flat = [];
+            for (let y = 0; y < SIZE; y++) {
+                const row = [];
+                for (let x = 0; x < SIZE; x++) {
+                    let hex = null;
+                    for (const name of renderOrder) {
+                        const g = layers[name];
+                        if (!g) continue;
+                        const c = resolve(g[y][x]);
+                        if (c) hex = c;
+                    }
+                    row.push(hex);
+                }
+                flat.push(row);
+            }
+
+            /* Re-letra:
+               A = #000000 (siempre, outline reservado).
+               Si la rampa tintable está activada, B/C/D quedan fijos a
+               los hex marcados por el usuario (oscuro → claro), aunque
+               no aparezcan en el arte — así el runtime siempre puede
+               tintar sobre ellos. El resto va a E, F, G... por orden
+               de aparición en las capas. */
+            const hexToLetter = new Map();
+            hexToLetter.set("#000000", "A");
+            let nextCode = "B".charCodeAt(0);
+
+            const rampEnabled = document.getElementById("rampEnabled").checked;
+            const rampB = document.getElementById("rampB").value.toLowerCase();
+            const rampC = document.getElementById("rampC").value.toLowerCase();
+            const rampD = document.getElementById("rampD").value.toLowerCase();
+
+            if (rampEnabled) {
+                hexToLetter.set(rampB, "B");
+                hexToLetter.set(rampC, "C");
+                hexToLetter.set(rampD, "D");
+                nextCode = "E".charCodeAt(0);
+            }
+
+            for (const row of flat) {
+                for (const hex of row) {
+                    if (!hex) continue;
+                    if (!hexToLetter.has(hex)) {
+                        hexToLetter.set(hex, String.fromCharCode(nextCode++));
+                    }
+                }
+            }
+
+            const paleta = { " ": "transparent" };
+            /* Emitir ordenado por letra para que la salida sea estable. */
+            const entries = [...hexToLetter.entries()]
+                .sort((a, b) => a[1].charCodeAt(0) - b[1].charCodeAt(0));
+            for (const [hex, letter] of entries) {
+                paleta[letter] = hex;
+            }
+
+            const blueprint = flat.map(row =>
+                row.map(hex => hex ? hexToLetter.get(hex) : " ").join("")
+            );
+
+            const doc = {
+                name: currentCharacter,
+                category: "characters",
+                source: "admin_designs",
+                tool: "character",
+                payload: { paleta, blueprint }
+            };
+
+            output.value = JSON.stringify(doc, null, 2);
         }
 
 
