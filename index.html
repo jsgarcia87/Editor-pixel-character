@@ -254,80 +254,105 @@
     </div>
 
     <script src="data.js"></script>
+    <script src="data_model.js"></script>
 
     <div class="panel">
 
-        <h1>Taskoria Character Library</h1>
+        <h1>Taskoria Art Lab</h1>
+        <div class="subtitle">Internal Asset Management Tool</div>
 
-        <div class="subtitle">
-            Pixel Art Character Editor · 64×64
+        <div class="tabs">
+            <div class="tab active">Character Lab</div>
+            <div class="tab disabled" title="Próximamente">Cosmetic Lab</div>
+            <div class="tab disabled" title="Próximamente">Builder</div>
         </div>
 
-        <div class="group">
-            <h3>Equipamiento (Clase)</h3>
-            <select id="characterSelect">
-                <!-- Will be populated dynamically -->
-            </select>
-        </div>
-
-        <div class="group">
-            <h3>Cuerpo (Género)</h3>
-            <select id="genderSelect">
-                <option value="MAN">Hombre</option>
-                <option value="WOMAN">Mujer</option>
-            </select>
-        </div>
-
-        <div class="group">
-            <h3>Brazos</h3>
-            <select id="armsSelect">
-                <!-- Will be populated dynamically -->
-            </select>
-        </div>
-
-        <div class="group">
-            <h3>Pelo</h3>
-            <select id="hairSelect">
-                <!-- Will be populated dynamically -->
-            </select>
-        </div>
-
-        <div class="group" id="equipmentGroup" style="display:none;">
-            <h3>Piezas Equipadas</h3>
-            <div style="margin-bottom: 5px;">
-                <label style="font-size: 12px; color: #aeb5b8; display:block;">Capa</label>
-                <select id="capeSelect" style="width:100%;"></select>
+        <!-- CHARACTER LAB MODE -->
+        <div id="characterLabMode">
+            <div class="group">
+                <h3>Personaje (Anatomía Base)</h3>
+                <select id="labCharacterSelect">
+                    <!-- Se llenará con TASKORIA_CHARACTERS -->
+                </select>
+                <div class="grid2" style="margin-top: 10px;">
+                    <button id="btnDuplicateCharacter">Duplicar Base</button>
+                    <button class="primary" id="btnExportCharacterBase">Exportar Base (JSON)</button>
+                </div>
             </div>
-            <div style="margin-bottom: 5px;">
-                <label style="font-size: 12px; color: #aeb5b8; display:block;">Cabeza</label>
-                <select id="headSelect" style="width:100%;"></select>
-            </div>
-            <div style="margin-bottom: 5px;">
-                <label style="font-size: 12px; color: #aeb5b8; display:block;">Torso</label>
-                <select id="torsoSelect" style="width:100%;"></select>
-            </div>
-            <div style="margin-bottom: 5px;">
-                <label style="font-size: 12px; color: #aeb5b8; display:block;">Piernas</label>
-                <select id="legsSelect" style="width:100%;"></select>
-            </div>
-            <div>
-                <label style="font-size: 12px; color: #aeb5b8; display:block;">Arma</label>
-                <select id="weaponSelect" style="width:100%;"></select>
-            </div>
-        </div>
 
-        <div class="group">
-            <h3>Capa editable</h3>
-            <select id="layerSelect">
-                <option value="cape">0 · Capa</option>
-                <option value="base_body">1 · Cuerpo Base</option>
-                <option value="arms">2 · Brazos</option>
-                <option value="legs">3 · Piernas</option>
-                <option value="torso">4 · Torso</option>
-                <option value="hair">5 · Pelo</option>
-                <option value="head">6 · Cabeza</option>
-                <option value="weapon">7 · Arma</option>
-            </select>
+            <div class="group">
+                <h3>Reference Board (Fantasmas)</h3>
+                <label style="font-size: 11px; color: var(--muted); display: block; margin-bottom: 5px;">Referencia visual:</label>
+                <select id="referenceSelect">
+                    <option value="NONE">Ninguna</option>
+                    <!-- Se llenará con TASKORIA_CHARACTERS -->
+                </select>
+                
+                <div style="margin-top: 10px; display: flex; align-items: center; justify-content: space-between;">
+                    <label style="font-size: 12px; color: #cbd3d7;">Opacidad:</label>
+                    <input type="range" id="referenceOpacity" min="0" max="1" step="0.1" value="0.3" style="width: 65%;">
+                </div>
+
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-top:10px;cursor:pointer;">
+                    <input type="checkbox" id="showBoundingBox" checked>
+                    Mostrar caja delimitadora (64x64)
+                </label>
+            <div class="group" id="styleValidatorPanel" style="background: rgba(0,0,0,0.15); border-left: 3px solid var(--accent); padding: 10px; margin-top: 15px;">
+                <h3 style="margin-top:0;">Taskoria Style Validator</h3>
+                <ul id="styleValidatorList" style="list-style: none; padding: 0; margin: 0; font-size: 12px; color: #aab2b7; display: flex; flex-direction: column; gap: 6px;">
+                    <li id="val-color-a">⏳ Colores Canónicos (Outline #000)</li>
+                    <li id="val-rgb-dup">⏳ Contraste Paleta (RGB dist > 12)</li>
+                    <li id="val-ramp-bcd">⏳ Rampa BCD (Sin saltos de letras)</li>
+                    <li id="val-silhouette">⏳ Colisión de Silueta (< 80%)</li>
+                </ul>
+            </div>
+            
+            <div class="group">
+                <h3>Herramientas de Dibujo</h3>
+                <label style="font-size: 11px; color: var(--muted); display: block; margin-bottom: 5px;">Capa activa (editable):</label>
+                <select id="layerSelectCharacterLab" style="margin-bottom: 12px;">
+                    <option value="base_body">Anatomía (base_body)</option>
+                </select>
+
+
+        </div> <!-- Cierra characterLabMode -->
+        
+        <div id="legacyMode" style="display:none;">
+            <div class="group">
+                <h3>Equipamiento (Clase)</h3>
+                <select id="characterSelect"></select>
+            </div>
+            <div class="group">
+                <h3>Cuerpo (Género)</h3>
+                <select id="genderSelect">
+                    <option value="MAN">Hombre</option>
+                    <option value="WOMAN">Mujer</option>
+                </select>
+            </div>
+            <div class="group">
+                <h3>Brazos</h3>
+                <select id="armsSelect"></select>
+            </div>
+            <div class="group">
+                <h3>Pelo</h3>
+                <select id="hairSelect"></select>
+            </div>
+            <div class="group" id="equipmentGroup">
+                <h3>Piezas Equipadas</h3>
+                <select id="capeSelect"></select>
+                <select id="headSelect"></select>
+                <select id="torsoSelect"></select>
+                <select id="legsSelect"></select>
+                <select id="weaponSelect"></select>
+            </div>
+            <div class="group">
+                <h3>Capa editable</h3>
+                <select id="layerSelect">
+                    <option value="base_body">1 · Cuerpo Base</option>
+                    <option value="arms">2 · Brazos</option>
+                    <option value="hair">5 · Pelo</option>
+                </select>
+            </div>
         </div>
 
         <div class="group">
@@ -2396,14 +2421,23 @@
 
         function buildAvatar() {
             layers = {
+                cape_back: blankGrid(),
                 cape: blankGrid(),
                 base_body: cloneGrid(BASE_BODIES[currentGender] || BASE_BODIES["MAN"]),
-                arms: blankGrid(),
+                hair: blankGrid(),
                 legs: blankGrid(),
                 torso: blankGrid(),
-                hair: blankGrid(),
+                accessory: blankGrid(),
+                arm_l: blankGrid(),
+                arm_r: blankGrid(),
+                arms: blankGrid(),
+                sleeve_l: blankGrid(),
+                sleeve_r: blankGrid(),
                 head: blankGrid(),
-                weapon: blankGrid()
+                hair_front: blankGrid(),
+                cape_front: blankGrid(),
+                weapon: blankGrid(),
+                aura: blankGrid()
             };
 
             if (typeof AVAILABLE_EQUIPMENT !== "undefined" && AVAILABLE_EQUIPMENT[currentCharacter]) {
@@ -2678,102 +2712,97 @@
 
 
             /* fondo */
+            ctx.fillStyle = "#20282d";
+            ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-            ctx.fillStyle =
-                "#20282d";
+            // 1. Dibujar Bounding Box y Guías (si aplica)
+            if (document.getElementById("showBoundingBox") && document.getElementById("showBoundingBox").checked) {
+                ctx.strokeStyle = "rgba(0, 255, 128, 0.25)";
+                ctx.lineWidth = 1;
+                // Marco exterior
+                ctx.strokeRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+                // Ejes centrales para simetría
+                ctx.beginPath();
+                ctx.moveTo(CANVAS_SIZE / 2, 0);
+                ctx.lineTo(CANVAS_SIZE / 2, CANVAS_SIZE);
+                ctx.moveTo(0, CANVAS_SIZE / 2);
+                ctx.lineTo(CANVAS_SIZE, CANVAS_SIZE / 2);
+                ctx.stroke();
+            }
 
-            ctx.fillRect(
-                0,
-                0,
-                CANVAS_SIZE,
-                CANVAS_SIZE
-            );
-
+            // 2. Dibujar Fantasma de Referencia (Character Lab)
+            if (typeof ghostReferenceId !== 'undefined' && ghostReferenceId !== "NONE") {
+                const refChar = taskoriaData.characters.get(ghostReferenceId);
+                if (refChar) {
+                    const ghostOpacity = parseFloat(document.getElementById("referenceOpacity").value) || 0.3;
+                    ctx.globalAlpha = ghostOpacity;
+                    for (let y = 0; y < SIZE; y++) {
+                        for (let x = 0; x < SIZE; x++) {
+                            const colorKey = refChar.baseBodyGrid[y][x];
+                            if (colorKey === " " || colorKey === "transparent") continue;
+                            let color = PALETTE[colorKey] || (colorKey.startsWith("#") ? colorKey : null);
+                            if (color) {
+                                ctx.fillStyle = color;
+                                ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
+                            }
+                        }
+                    }
+                    ctx.globalAlpha = 1;
+                }
+            }
 
             const renderOrder = [
-
-                "cape",
+                "cape_back",
+                "cape",      // legacy
                 "base_body",
-                "arms",
+                "hair",
                 "legs",
                 "torso",
-                "hair",
+                "accessory",
+                "arm_l",
+                "arm_r",
+                "arms",      // legacy
+                "sleeve_l",
+                "sleeve_r",
                 "head",
-                "weapon"
-
+                "hair_front",
+                "cape_front",
+                "weapon",
+                "aura"
             ];
-
-
-            /* Modo calco: solo se pinta el cuerpo base (a opacidad reducida)
-               y la capa que se está editando. El resto se oculta para no
-               competir visualmente con el trazo. Si la capa editada ES el
-               cuerpo base, el calco no aplica (se ve todo normal). */
 
             const isCalco = calcoMode && currentLayer !== "base_body";
 
-
-            renderOrder.forEach(
-                layerName => {
-
-                    if (isCalco) {
-                        if (layerName !== "base_body" && layerName !== currentLayer) return;
-                    }
-
-                    const grid =
-                        layers[layerName];
-
-                    const dim = isCalco && layerName === "base_body";
-                    ctx.globalAlpha = dim ? calcoOpacity : 1;
-
-                    for (
-                        let y = 0;
-                        y < SIZE;
-                        y++
-                    ) {
-
-                        for (
-                            let x = 0;
-                            x < SIZE;
-                            x++
-                        ) {
-
-                            const colorKey =
-                                grid[y][x];
-
-                            if (
-                                colorKey === " " || colorKey === "transparent"
-                            ) continue;
-
-                            let color =
-                                PALETTE[
-                                colorKey
-                                ];
-
-                            if (!color && colorKey && colorKey.startsWith("#")) {
-                                color = colorKey;
-                            }
-
-                            if (!color) continue;
-
-                            ctx.fillStyle =
-                                color;
-
-                            ctx.fillRect(
-                                x * SCALE,
-                                y * SCALE,
-                                SCALE,
-                                SCALE
-                            );
-
-                        }
-
-                    }
-
+            renderOrder.forEach(layerName => {
+                if (isCalco) {
+                    if (layerName !== "base_body" && layerName !== currentLayer) return;
                 }
-            );
+
+                const grid = layers[layerName];
+                if (!grid) return; // Prevent crashes if layer is empty
+
+                const dim = isCalco && layerName === "base_body";
+                ctx.globalAlpha = dim ? calcoOpacity : 1;
+
+                for (let y = 0; y < SIZE; y++) {
+                    for (let x = 0; x < SIZE; x++) {
+                        const colorKey = grid[y][x];
+                        if (colorKey === " " || colorKey === "transparent") continue;
+                        let color = PALETTE[colorKey];
+                        if (!color && colorKey && colorKey.startsWith("#")) color = colorKey;
+                        if (!color) continue;
+                        ctx.fillStyle = color;
+                        ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
+                    }
+                }
+            });
 
             ctx.globalAlpha = 1;
-
+            
+            // Ejecutar validaciones de estilo en tiempo real
+            if (typeof runStyleValidation === "function") {
+                runStyleValidation();
+            }
         }
 
 
@@ -3382,8 +3411,251 @@
 
 
         /* =========================================================
+           CHARACTER LAB LOGIC
+        ========================================================= */
+
+        let activeLabCharacterId = "FIGHTER";
+        let ghostReferenceId = "NONE";
+        
+        function initCharacterLab() {
+            const labSelect = document.getElementById("labCharacterSelect");
+            const refSelect = document.getElementById("referenceSelect");
+            
+            // Llenar selectores con los personajes parseados en data.js -> data_model.js
+            taskoriaData.characters.forEach((char, id) => {
+                const opt = document.createElement("option");
+                opt.value = id;
+                opt.textContent = char.name;
+                labSelect.appendChild(opt);
+                
+                const optRef = document.createElement("option");
+                optRef.value = id;
+                optRef.textContent = char.name;
+                refSelect.appendChild(optRef);
+            });
+            
+            // Opción de nuevo personaje
+            const optNew = document.createElement("option");
+            optNew.value = "NEW";
+            optNew.textContent = "+ Nuevo Personaje Base";
+            labSelect.appendChild(optNew);
+            
+            labSelect.value = activeLabCharacterId;
+            
+            // Al cambiar el personaje activo a editar
+            labSelect.addEventListener("change", (e) => {
+                activeLabCharacterId = e.target.value;
+                loadFullCharacterPreview(activeLabCharacterId);
+                render();
+            });
+            
+            // Al cambiar la referencia (fantasma)
+            refSelect.addEventListener("change", (e) => {
+                ghostReferenceId = e.target.value;
+                render();
+            });
+            
+            document.getElementById("referenceOpacity").addEventListener("input", render);
+            document.getElementById("showBoundingBox").addEventListener("change", render);
+
+            document.getElementById("btnDuplicateCharacter").addEventListener("click", () => {
+                // Genera una copia y la asigna a un nuevo grid
+                if (activeLabCharacterId === "NEW") return;
+                const char = taskoriaData.characters.get(activeLabCharacterId);
+                if (char) {
+                    layers["base_body"] = JSON.parse(JSON.stringify(char.baseBodyGrid));
+                    currentCharacter = char.name + "_COPIA";
+                    labSelect.value = "NEW";
+                    activeLabCharacterId = "NEW";
+                    alert("Has duplicado a " + char.name + ". Estás editando una copia libre.");
+                    render();
+                }
+            });
+
+            document.getElementById("btnExportCharacterBase").addEventListener("click", () => {
+                // Exporta únicamente la anatomía como un JSON blueprint
+                const payload = {
+                    palette: PALETTE,
+                    blueprint: layers["base_body"].map(row => row.join(""))
+                };
+                const json = {
+                    name: currentCharacter,
+                    category: "characters",
+                    payload: payload
+                };
+                document.getElementById("output").value = JSON.stringify(json, null, 2);
+            });
+            
+            // Forzar capa activa a base_body y limpiar las demás (Character Lab solo edita anatomía)
+            currentLayer = "base_body";
+            
+            function loadFullCharacterPreview(charId) {
+                const emptyGrid = Array.from({length: SIZE}, () => Array(SIZE).fill(" "));
+                Object.keys(layers).forEach(l => {
+                    layers[l] = emptyGrid;
+                });
+                
+                if (charId === "NEW") {
+                    layers["base_body"] = emptyGrid;
+                    currentCharacter = "NEW_CHARACTER";
+                    return;
+                }
+                
+                const char = taskoriaData.characters.get(charId);
+                if (char) {
+                    layers["base_body"] = JSON.parse(JSON.stringify(char.baseBodyGrid));
+                    currentCharacter = char.name;
+                    
+                    // Cargar contexto visual (cosméticos por defecto de la clase)
+                    if (typeof AVAILABLE_ARMS !== 'undefined' && AVAILABLE_ARMS.length > 0) {
+                        layers["arms"] = AVAILABLE_ARMS[0].grid;
+                    }
+                    if (typeof AVAILABLE_HAIR !== 'undefined' && AVAILABLE_HAIR.length > 0) {
+                        layers["hair"] = AVAILABLE_HAIR[0].grid;
+                    }
+                    if (typeof EQUIPMENT_SETS !== 'undefined' && EQUIPMENT_SETS[charId]) {
+                        const eq = EQUIPMENT_SETS[charId];
+                        if (eq.cape && eq.cape.length > 0) layers["cape"] = eq.cape;
+                        if (eq.head && eq.head.length > 0) layers["head"] = eq.head;
+                        if (eq.torso && eq.torso.length > 0) layers["torso"] = eq.torso;
+                        if (eq.legs && eq.legs.length > 0) layers["legs"] = eq.legs;
+                        if (eq.weapon && eq.weapon.length > 0) layers["weapon"] = eq.weapon;
+                    }
+                }
+            }
+            
+            // Cargar inicial
+            loadFullCharacterPreview(activeLabCharacterId);
+        }
+
+
+        /* =========================================================
+           STYLE VALIDATOR
+        ========================================================= */
+
+        function runStyleValidation() {
+            // Se ejecuta solo en Character Lab
+            if (!document.getElementById("characterLabMode") || document.getElementById("characterLabMode").style.display === "none") return;
+
+            // 1. Colores Canónicos (A = #000000 o similar en palette)
+            const colorA = PALETTE["A"];
+            const liColorA = document.getElementById("val-color-a");
+            if (colorA && (colorA === "#000000" || colorA === "#17191b")) {
+                liColorA.innerHTML = "✅ Colores Canónicos (Outline #000)";
+                liColorA.style.color = "#7cb342";
+            } else {
+                liColorA.innerHTML = "❌ Colores Canónicos (Falta A = #000000)";
+                liColorA.style.color = "#e53935";
+            }
+
+            // 2. Rampa BCD
+            const liRamp = document.getElementById("val-ramp-bcd");
+            const hasB = !!PALETTE["B"];
+            const hasC = !!PALETTE["C"];
+            const hasD = !!PALETTE["D"];
+            if (hasB && hasC && hasD) {
+                liRamp.innerHTML = "✅ Rampa BCD intacta";
+                liRamp.style.color = "#7cb342";
+            } else if (!hasB && !hasC && !hasD) {
+                liRamp.innerHTML = "✅ Sin rampa BCD (Válido si no requiere tinte)";
+                liRamp.style.color = "#7cb342";
+            } else {
+                liRamp.innerHTML = "❌ Rampa BCD rota (saltos de letras)";
+                liRamp.style.color = "#e53935";
+            }
+
+            // 3. Duplicidad RGB
+            const hexToRgb = hex => {
+                let r = 0, g = 0, b = 0;
+                if (hex.length === 4) {
+                    r = parseInt(hex[1]+hex[1], 16);
+                    g = parseInt(hex[2]+hex[2], 16);
+                    b = parseInt(hex[3]+hex[3], 16);
+                } else if (hex.length === 7) {
+                    r = parseInt(hex.substring(1,3), 16);
+                    g = parseInt(hex.substring(3,5), 16);
+                    b = parseInt(hex.substring(5,7), 16);
+                }
+                return [r, g, b];
+            };
+            
+            const dist = (c1, c2) => {
+                const [r1, g1, b1] = hexToRgb(c1);
+                const [r2, g2, b2] = hexToRgb(c2);
+                return Math.sqrt(Math.pow(r1-r2,2) + Math.pow(g1-g2,2) + Math.pow(b1-b2,2));
+            };
+
+            let duplicateFound = false;
+            const colors = Object.values(PALETTE).filter(c => c && c.startsWith("#"));
+            for (let i = 0; i < colors.length; i++) {
+                for (let j = i + 1; j < colors.length; j++) {
+                    if (dist(colors[i], colors[j]) <= 12) {
+                        duplicateFound = true;
+                        break;
+                    }
+                }
+                if (duplicateFound) break;
+            }
+
+            const liRgb = document.getElementById("val-rgb-dup");
+            if (duplicateFound) {
+                liRgb.innerHTML = "❌ Contraste pobre (Colores muy similares)";
+                liRgb.style.color = "#e53935";
+            } else {
+                liRgb.innerHTML = "✅ Contraste Paleta OK";
+                liRgb.style.color = "#7cb342";
+            }
+
+            // 4. Colisión de Silueta (solo vs clases conocidas)
+            const liSilhouette = document.getElementById("val-silhouette");
+            if (activeLabCharacterId !== "NEW") {
+                liSilhouette.innerHTML = "✅ Silueta (No aplica a editar originales)";
+                liSilhouette.style.color = "#7cb342";
+            } else {
+                const currentGrid = layers["base_body"];
+                let overlapMax = 0;
+                let overlapChar = "";
+                
+                taskoriaData.characters.forEach((char, id) => {
+                    let totalPixels = 0;
+                    let overlapPixels = 0;
+                    for (let y=0; y<SIZE; y++) {
+                        for (let x=0; x<SIZE; x++) {
+                            const p1 = currentGrid[y][x];
+                            const p2 = char.baseBodyGrid[y][x];
+                            const isP1 = p1 !== " " && p1 !== "transparent";
+                            const isP2 = p2 !== " " && p2 !== "transparent";
+                            if (isP1) {
+                                totalPixels++;
+                                if (isP2) overlapPixels++;
+                            }
+                        }
+                    }
+                    if (totalPixels > 0) {
+                        const ratio = overlapPixels / totalPixels;
+                        if (ratio > overlapMax) {
+                            overlapMax = ratio;
+                            overlapChar = char.name;
+                        }
+                    }
+                });
+                
+                const percent = Math.round(overlapMax * 100);
+                if (percent >= 80) {
+                    liSilhouette.innerHTML = `❌ Colisión de Silueta: ${percent}% con ${overlapChar}`;
+                    liSilhouette.style.color = "#e53935";
+                } else {
+                    liSilhouette.innerHTML = `✅ Silueta Única (Solape max ${percent}%)`;
+                    liSilhouette.style.color = "#7cb342";
+                }
+            }
+        }
+
+        /* =========================================================
            INIT
         ========================================================= */
+
+        initCharacterLab();
 
         buildPalette();
 
